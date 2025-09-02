@@ -4,117 +4,76 @@
   <meta charset="UTF-8">
   <title>Minecraft Lagerkarte</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #222;
-      color: #eee;
+    body { font-family: Arial; text-align: center; }
+    .lager { display: flex; justify-content: center; gap: 40px; margin-top: 20px; }
+    .reihe {
+      border: 2px solid blue;
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    h1 { margin-top: 20px; }
-    input {
-      padding: 6px;
-      font-size: 14px;
+    .reihe h2 { margin: 5px 0; }
+    .slot {
+      width: 60px; height: 25px;
+      border: 1px solid #999;
+      margin: 1px 0;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 12px;
     }
-    button {
-      padding: 6px 10px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    table {
-      border-collapse: collapse;
-      margin: 20px auto;
-    }
-    th {
-      background: #444;
-      padding: 6px;
-    }
-    td {
-      border: 1px solid #555;
-      width: 100px;
-      height: 50px;
-      text-align: center;
-      font-size: 11px;
-      background: #333;
-      color: #eee;
-      vertical-align: middle;
-      word-wrap: break-word;
-    }
-    .highlight {
-      background: yellow !important;
-      color: black !important;
-      font-weight: bold;
-    }
+    .highlight { background: yellow; font-weight: bold; }
   </style>
 </head>
 <body>
 
   <h1>Minecraft Lagerkarte</h1>
-  <p>
-    <input type="text" id="search" placeholder="Item suchen...">
-    <button onclick="searchItem()">Suchen</button>
-  </p>
+  <input type="text" id="search" placeholder="Item suchen...">
+  <button onclick="searchItem()">Suchen</button>
 
-  <!-- Lager-Grid -->
-  <div id="lager"></div>
+  <div class="lager">
+    <div class="reihe" id="R1"><h2>R1</h2></div>
+    <div class="reihe" id="R2"><h2>R2</h2></div>
+    <div class="reihe" id="R3"><h2>R3</h2></div>
+    <div class="reihe" id="R4"><h2>R4</h2></div>
+  </div>
 
   <script>
     let items = {};
 
     // Items laden
     fetch("items.json")
-      .then(response => response.json())
-      .then(data => {
-        items = data;
-        buildTables();
-      });
+      .then(r => r.json())
+      .then(data => { items = data; });
 
-    // Tabellen für Reihen bauen
-    function buildTables() {
-      const container = document.getElementById("lager");
-
-      for (let r = 1; r <= 4; r++) {
-        const table = document.createElement("table");
-        const header = document.createElement("tr");
-        const th = document.createElement("th");
-        th.colSpan = 10;
-        th.innerText = "Reihe " + r;
-        header.appendChild(th);
-        table.appendChild(header);
-
-        let row;
-        for (let k = 1; k <= 50; k++) {
-          if ((k - 1) % 10 === 0) {
-            row = document.createElement("tr");
-            table.appendChild(row);
-          }
-          const cell = document.createElement("td");
-          cell.id = "R" + r + "-K" + k;
-
-          // passenden Itemnamen suchen
-          let itemName = Object.keys(items).find(key => items[key] === ("R" + r + "-K" + k));
-          cell.innerText = itemName ? itemName : "-";
-
-          row.appendChild(cell);
-        }
-        container.appendChild(table);
+    // Slots generieren
+    function makeSlots(reihe, count) {
+      const container = document.getElementById(reihe);
+      for (let i=1; i<=count; i++) {
+        const slot = document.createElement("div");
+        slot.classList.add("slot");
+        slot.id = reihe + "-" + i;
+        slot.innerText = i;
+        container.appendChild(slot);
       }
     }
 
-    // Suchfunktion
-    function searchItem() {
-      // Reset Highlights
-      document.querySelectorAll("td").forEach(c => c.classList.remove("highlight"));
+    // Anzahl Kisten wie in deiner Zeichnung
+    makeSlots("R1", 20); // Beispiel
+    makeSlots("R2", 30);
+    makeSlots("R3", 50);
+    makeSlots("R4", 50);
 
+    // Suche
+    function searchItem() {
+      document.querySelectorAll(".slot").forEach(s => s.classList.remove("highlight"));
       let input = document.getElementById("search").value.trim();
       let pos = items[input];
-
-      if (pos) {
+      if(pos) {
         document.getElementById(pos).classList.add("highlight");
       } else {
         alert("Item nicht gefunden!");
       }
     }
   </script>
-
 </body>
 </html>
