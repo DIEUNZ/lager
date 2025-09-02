@@ -1,75 +1,126 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Minecraft Lagerkarte</title>
   <style>
-    body { font-family: Arial; text-align: center; }
+    body { font-family: Arial, sans-serif; text-align: center; }
+    h1 { margin-top: 20px; }
     .lager { display: flex; justify-content: center; gap: 40px; margin-top: 20px; }
-    .reihe {
-      border: 2px solid blue;
-      padding: 5px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    .reihe { border: 2px solid blue; padding: 5px; display: flex; flex-direction: column; align-items: center; }
     .reihe h2 { margin: 5px 0; }
+    .reihe-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
     .slot {
-      width: 60px; height: 25px;
+      width: 160px; height: 26px;
       border: 1px solid #999;
-      margin: 1px 0;
       display: flex; justify-content: center; align-items: center;
-      font-size: 12px;
+      font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      background: #fff;
     }
+    .separator-row { grid-column: 1 / span 2; height: 8px; background: #8B4513; border: none; }
     .highlight { background: yellow; font-weight: bold; }
+    @media (max-width: 1400px){ .slot { width: 140px; } }
   </style>
 </head>
 <body>
 
   <h1>Minecraft Lagerkarte</h1>
-  <input type="text" id="search" placeholder="Item suchen...">
+  <input type="text" id="search" placeholder="Item suchen..." />
   <button onclick="searchItem()">Suchen</button>
 
   <div class="lager">
-    <div class="reihe" id="R1"><h2>R1</h2></div>
-    <div class="reihe" id="R2"><h2>R2</h2></div>
-    <div class="reihe" id="R3"><h2>R3</h2></div>
-    <div class="reihe" id="R4"><h2>R4</h2></div>
+    <!-- Reihen von links nach rechts: R4, R3, R2, R1 -->
+    <div class="reihe" id="R4"><h2>R4</h2><div class="reihe-grid" id="grid-R4"></div></div>
+    <div class="reihe" id="R3"><h2>R3</h2><div class="reihe-grid" id="grid-R3"></div></div>
+    <div class="reihe" id="R2"><h2>R2</h2><div class="reihe-grid" id="grid-R2"></div></div>
+    <div class="reihe" id="R1"><h2>R1</h2><div class="reihe-grid" id="grid-R1"></div></div>
   </div>
 
   <script>
-    let items = {};
+    // ALLE Items direkt hier eingebaut
+    const items = {
+      "Oak Log": "R1-1","Oak Plank": "R1-2","Oak Stairs": "R1-3","Oak Slab": "R1-4",
+      "Spruce Log": "R1-6","Spruce Plank": "R1-7","Spruce Stairs": "R1-8","Spruce Slab": "R1-9",
+      "Dark Oak Slab": "R1-12","Dark Oak Stairs": "R1-13","Dark Oak Planks": "R1-14","Dark Oak Logs": "R1-15",
+      "Cherry Slabs": "R1-17","Cherry Stairs": "R1-18","Cherry Planks": "R1-19","Cherry Logs": "R1-20",
 
-    // Items laden
-    fetch("items.json")
-      .then(r => r.json())
-      .then(data => { items = data; });
+      "Crimson Slabs": "R2-2","Crimson Stairs": "R2-3","Crimson Planks": "R2-4","Crimson Logs": "R2-5",
+      "Mangrove Slabs": "R2-7","Mangrove Stairs": "R2-8","Mangrove Planks": "R2-9","Mangrove Logs": "R2-10",
+      "Jungle Slabs": "R2-12","Jungle Stairs": "R2-13","Jungle Planks": "R2-14","Jungle Logs": "R2-15",
+      "Gravel": "R2-16","Polished Granite": "R2-17","Granite": "R2-18","Polished Diorite": "R2-19","Diorite": "R2-20",
+      "Stone Bricks": "R2-21","Smooth Stone": "R2-22","Stone": "R2-23","Cobble": "R2-25","Cobblestone Slabs": "R2-27",
+      "Warped Stairs": "R2-28","Warped Planks": "R2-29","Warped Logs": "R2-30",
 
-    // Slots generieren
-    function makeSlots(reihe, count) {
-      const container = document.getElementById(reihe);
-      for (let i=1; i<=count; i++) {
-        const slot = document.createElement("div");
-        slot.classList.add("slot");
-        slot.id = reihe + "-" + i;
-        slot.innerText = i;
-        container.appendChild(slot);
-      }
-    }
+      "Netherrack": "R3-2","Magma Block": "R3-3","Endstone": "R3-4","Soul Sand": "R3-5","Sand": "R3-6","Sandstone": "R3-7",
+      "Mud": "R3-8","Deepslate Tiles": "R3-10","Deepslate Bricks": "R3-11","Cobbled Deepslate": "R3-12","Deepslate": "R3-13",
+      "Polished Andesite": "R3-14","Andesite": "R3-15","Coal": "R3-16","Block of Coal": "R3-17","Iron": "R3-18","Block of Iron": "R3-19",
+      "Gold": "R3-20","Gold Block": "R3-21","Diamond": "R3-22","Emerald": "R3-23","Block of Emerald": "R3-24","Lapis": "R3-25",
+      "Ancient Debris": "R3-38","Netherite Scrap": "R3-39","Netherite Ingot": "R3-40","Glowstone Dust": "R3-41","Glowstone Block": "R3-42",
+      "Quartz Ore": "R3-43","Block of Quartz": "R3-44","Nether Quartz": "R3-45","Redstone Torch": "R3-46","Redstone Repeater": "R3-47",
+      "Redstone Comparator": "R3-48","Redstone Block": "R3-49",
 
-    // Anzahl Kisten wie in deiner Zeichnung
-    makeSlots("R1", 20); // Beispiel
+      "Sea Lantern": "R4-1","Prismarine Crystals": "R4-2","Prismarine Shards": "R4-3","Dark Prismarine": "R4-4","Prismarine": "R4-5",
+      "Honeycomb Block": "R4-7","Honey Block": "R4-8","Honeycomb": "R4-9","Honey Bottle": "R4-10",
+      "Cocoa Beans": "R4-11","Pumpkin": "R4-12","Pumpkin Seeds": "R4-13","Melon": "R4-14","Melon Slices": "R4-15",
+      "Paper": "R4-16","Sugar Cane": "R4-17","Block of Bamboo": "R4-18","Bamboo Planks": "R4-19","Bamboo": "R4-20",
+      "Potato": "R4-21","Cod": "R4-22","Cooked Cod": "R4-23","Wheat": "R4-24","Wheat Seeds": "R4-25",
+      "Book": "R4-26","Ink Sac": "R4-27","Breeze Rod": "R4-28","Leather": "R4-29","String": "R4-30",
+      "Gunpowder": "R4-31","Bone Meal": "R4-32","Bone": "R4-33",
+      "Slimeball": "R4-35","Slime Block": "R4-36","Chorus Flower": "R4-37","Chorus Fruit": "R4-38","Poppy": "R4-39",
+      "Carrot": "R4-40","Salmon": "R4-41","Packed Ice": "R4-42","Rail": "R4-43","Powered Rail": "R4-44",
+      "Observer": "R4-46","Dispenser": "R4-47","Dropper": "R4-48","Piston": "R4-49","Sticky Piston": "R4-50"
+    };
+
+    // Reihen-Größen (bei Bedarf anpassen)
+    makeSlots("R1", 20);
     makeSlots("R2", 30);
     makeSlots("R3", 50);
     makeSlots("R4", 50);
 
-    // Suche
+    // Rechte Spalte = kleine Nummern, Linke Spalte = große Nummern
+    // + brauner Separator nach 5/10/15... (volle Zeile)
+    function makeSlots(reihe, count) {
+      const grid = document.getElementById("grid-" + reihe);
+      const half = Math.ceil(count / 2);
+
+      for (let i = 1; i <= half; i++) {
+        // Linke Zelle (hoch)
+        const leftNum = i + half;  // > half
+        appendCell(grid, reihe, leftNum, count);
+
+        // Rechte Zelle (niedrig)
+        const rightNum = i;        // 1..half
+        appendCell(grid, reihe, rightNum, count);
+
+        // Separator-Reihe nach 5/10/15... (aber nicht nach der letzten)
+        if (i % 5 === 0 && i < half) {
+          const sep = document.createElement("div");
+          sep.className = "separator-row";
+          grid.appendChild(sep);
+        }
+      }
+    }
+
+    function appendCell(grid, reihe, num, max) {
+      const cell = document.createElement("div");
+      cell.classList.add("slot");
+      if (num >= 1 && num <= max) {
+        cell.id = `${reihe}-${num}`;
+        const itemName = Object.keys(items).find(k => items[k] === `${reihe}-${num}`);
+        cell.innerText = itemName ? itemName : "-";
+      } else {
+        cell.innerText = "-";
+      }
+      grid.appendChild(cell);
+    }
+
     function searchItem() {
       document.querySelectorAll(".slot").forEach(s => s.classList.remove("highlight"));
-      let input = document.getElementById("search").value.trim();
-      let pos = items[input];
-      if(pos) {
+      const input = document.getElementById("search").value.trim();
+      const pos = items[input];
+      if (pos && document.getElementById(pos)) {
         document.getElementById(pos).classList.add("highlight");
+        document.getElementById(pos).scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
       } else {
         alert("Item nicht gefunden!");
       }
